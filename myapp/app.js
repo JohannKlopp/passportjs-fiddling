@@ -127,19 +127,19 @@ app.post("/signup", (req, res) => {
     });
   };
 
-  // var newUser = new User({
-  //   username: enteredUsername,
-  //   email: enteredEmail,
-  //   password: enteredPassword
-  // });
-  //
-  // newUser.save((err) => {
-  //   if (err) return console.error(err);
-  //   req.logIn(newUser, (err) => {
-  //     if (err) return console.error(err);
-  //     res.redirect("/secret");
-  //   });
-  // });
+  var newUser = new User({
+    username: enteredUsername,
+    email: enteredEmail,
+    password: enteredPassword
+  });
+
+  newUser.save((err) => {
+    if (err) return console.error(err);
+    req.logIn(newUser, (err) => {
+      if (err) return console.error(err);
+      res.redirect("/secret");
+    });
+  });
 
 
     // if(err.errors.username && err.errors. && err.errors. && err.errors.)
