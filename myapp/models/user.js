@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt-nodejs");
+// const bcrypt = require("bcrypt-nodejs");
 const securePassword = require("secure-password");
 
 var UserSchema = new mongoose.Schema({
@@ -19,7 +19,7 @@ var UserSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true,
-    minlength: 3
+    minlength: 1
   },
   resetPasswordToken: String,
   resetPasswordExpires: Date

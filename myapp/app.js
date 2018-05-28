@@ -12,42 +12,14 @@ const session = require("express-session");
 const nodemailer = require("nodemailer");
 const passport = require("passport");
 const localStrategy = require("passport-local").Strategy;
-const securePassword = require("secure-password");
+
+
 
 //Local imports
 const {mongoose} = require("./db/mongoose");
 const {User} = require("./models/user");
-
-//local authentication via passportjs
-passport.use(new localStrategy({
-  usernameField: "email"
-},
-(username, password, done) => {
-  User.findOne({email: username}, (err, userFromDb) => {
-    if(err) return done(err);
-    if(!userFromDb) return done(null, false, {message: "Incorrect email."});
-
-    userFromDb.verifyPassword(password, (err, result) => {
-      if(result === securePassword.VALID) {
-        return done(null, userFromDb);
-      }
-      else {
-        return done(null, false, {message: "Incorrect password."});
-      }
-    });
-  });
-}));
-
-// Staying logged in when navigating between diff pages of the app
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
-
-passport.deserializeUser((id, done) => {
-  User.findById(id, (err, user) => {
-    done(err, user);
-  });
-});
+const {local} = require("./auth/localAuth");
+const {ensureAuthenticated} = require("./auth/localAuth");
 
 var app = express();
 
@@ -59,7 +31,7 @@ app.use(logger("dev"));
 app.use(bodyParser.json()); //only used for/applied to the request body (req.body)
 app.use(bodyParser.urlencoded());
 app.use(cookieParser());
-app.use(session({ secret: "session secret key"}));
+app.use(session({ secret: "secret sesssssssion key"}));
 app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
@@ -92,10 +64,6 @@ app.get("/logout", (req, res) => {
   res.redirect("/");
 });
 
-function ensureAuthenticated(req, res, next) {
-  if(req.isAuthenticated()) { return next() };
-  res.redirect("/login");
-};
 
 app.get("/secret", ensureAuthenticated, (req, res) => {
   res.send("yippii");
@@ -108,19 +76,87 @@ app.get("/signup", (req, res) => {
   });
 });
 
+// const validator = require("validator");
+const {body, validationResult} = require("express-validator/check");
+const {sanitizeBody} = require("express-validator/filter");
+
 app.post("/signup", (req, res) => {
-  var newUser = new User({
-    username: req.body.username,
-    email: req.body.email,
-    password: req.body.password
+  var enteredUsername = req.body.username;
+  var enteredEmail = req.body.email;
+  var enteredPassword = req.body.password;
+  var enteredConfirmP = req.body.confirm;
+
+  User.find({email: enteredEmail}).then((alreadyExEmail) => {
+    if (alreadyExEmail) {
+      req.flash("error", "This email is already in use.");
+      return res.redirect("signup");
+    };
   });
+
+  User.find({username: enteredUsername}).then((alreadyExEmail) => {
+    if (alreadyExEmail) {
+      req.flash("error", "This email is already in use.");
+      return res.redirect("signup");
+    };
+  });
+
+  if(!enteredUsername && !enteredEmail && !enteredPassword && !enteredConfirmP) {
+    req.flash("error", "Please enter a username, an email and a password.");
+    return res.redirect("/signup");
+  };
+
+  if(!enteredUsername && !enteredEmail && !enteredPassword && !enteredConfirmP) {
+    req.flash("error", "Please enter a username, an email and a password.");
+    return res.redirect("/signup");
+  };
+  if(!enteredUsername && enteredEmail && enteredPassword && enteredConfirmP) {
+    req.flash("error", "Please enter a username.");
+    return res.render("signup", {
+      email: enteredEmail
+    });
+  };
+  if(!enteredUsername && enteredEmail && enteredPassword && enteredConfirmP) {
+    req.flash("error", "Please enter a username.");
+    return res.render("signup", {
+      email: enteredEmail
+    });
+  };
+
+  var newUser = new User({
+    username: enteredUsername,
+    email: enteredEmail,
+    password: enteredPassword
+  });
+
   newUser.save((err) => {
-    if(err) console.error(err);
+    if (err) return console.error(err);
     req.logIn(newUser, (err) => {
-      if(err) console.error(err);
-      res.redirect("/");
+      if (err) return console.error(err);
+      res.redirect("/secret");
     });
   });
+
+
+    // if(err.errors.username && err.errors. && err.errors. && err.errors.)
+    // if(err.errors.username) {
+    //   // console.error(err);
+    //   req.flash("error", "Please enter a username");
+    //   res.redirect("/signup");
+    // }
+    // else if(err.errors.email) {
+    //   // console.error(err);
+    //   req.flash("error", "Please enter an email");
+    //   res.redirect("/signup");
+    // }
+    // else {
+    //   res.redirect("/");
+    // };
+    // res.send(err);
+    // "Path `username` is required."
+    // req.logIn(newUser, (err) => {
+    //   if(err) console.error(err);
+    //   res.redirect("/");
+    // });
 });
 
 app.get("/forgot", (req, res) => {
@@ -128,6 +164,9 @@ app.get("/forgot", (req, res) => {
     user: req.user
   });
 });
+
+const async = require("async");
+const crypto = require("crypto");
 
 // POST /forgot
 app.post('/forgot', function(req, res, next) {
@@ -173,7 +212,7 @@ app.post('/forgot', function(req, res, next) {
           'If you did not request this, please ignore this email and your password will remain unchanged.\n'
       };
       smtpTransport.sendMail(mailOptions, function(err) {
-        req.flash('info', 'An e-mail has been sent to ' + user.email + ' with further instructions.');
+        req.flash('info', `An e-mail has been sent to ${user.email} with further instructions.`);
         done(err, 'done');
       });
     }
