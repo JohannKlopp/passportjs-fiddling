@@ -87,17 +87,22 @@ app.post("/signup", (req, res) => {
   var enteredConfirmP = req.body.confirm;
 
   User.find({email: enteredEmail}).then((alreadyExEmail) => {
+    console.log(alreadyExEmail);
     if (alreadyExEmail) {
       req.flash("error", "This email is already in use.");
-      return res.redirect("signup");
+      return res.redirect("/signup");
     };
+  }).catch((e) => {
+    console.error(e);
   });
 
-  User.find({username: enteredUsername}).then((alreadyExEmail) => {
-    if (alreadyExEmail) {
-      req.flash("error", "This email is already in use.");
-      return res.redirect("signup");
+  User.find({username: enteredUsername}).then((alreadyExUsername) => {
+    if (alreadyExUsername) {
+      req.flash("error", "This username is already in use.");
+      return res.redirect("/signup");
     };
+  }).catch((e) => {
+    console.error(e);
   });
 
   if(!enteredUsername && !enteredEmail && !enteredPassword && !enteredConfirmP) {
@@ -116,25 +121,25 @@ app.post("/signup", (req, res) => {
     });
   };
   if(!enteredUsername && enteredEmail && enteredPassword && enteredConfirmP) {
-    req.flash("error", "Please enter a username.");
+    req.flash("error", "Please enter an email.");
     return res.render("signup", {
-      email: enteredEmail
+      username: enteredUsername
     });
   };
 
-  var newUser = new User({
-    username: enteredUsername,
-    email: enteredEmail,
-    password: enteredPassword
-  });
-
-  newUser.save((err) => {
-    if (err) return console.error(err);
-    req.logIn(newUser, (err) => {
-      if (err) return console.error(err);
-      res.redirect("/secret");
-    });
-  });
+  // var newUser = new User({
+  //   username: enteredUsername,
+  //   email: enteredEmail,
+  //   password: enteredPassword
+  // });
+  //
+  // newUser.save((err) => {
+  //   if (err) return console.error(err);
+  //   req.logIn(newUser, (err) => {
+  //     if (err) return console.error(err);
+  //     res.redirect("/secret");
+  //   });
+  // });
 
 
     // if(err.errors.username && err.errors. && err.errors. && err.errors.)
