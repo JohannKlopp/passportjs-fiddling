@@ -77,33 +77,48 @@ app.get("/signup", (req, res) => {
 });
 
 // const validator = require("validator");
-const {body, validationResult} = require("express-validator/check");
-const {sanitizeBody} = require("express-validator/filter");
+// const {body, validationResult} = require("express-validator/check");
+// const {sanitizeBody} = require("express-validator/filter");
+// const asyncHandler = require("express-async-handler");
 
-app.post("/signup", (req, res) => {
+app.post("/signup",async (req, res) => {
   var enteredUsername = req.body.username;
   var enteredEmail = req.body.email;
   var enteredPassword = req.body.password;
   var enteredConfirmP = req.body.confirm;
 
-  User.find({email: enteredEmail}).then((alreadyExEmail) => {
-    console.log(alreadyExEmail);
-    if (alreadyExEmail) {
-      req.flash("error", "This email is already in use.");
-      return res.redirect("/signup");
-    };
-  }).catch((e) => {
-    console.error(e);
-  });
+  // User.find({email: enteredEmail}).then((alreadyExEmail) => {
+  //   console.log(alreadyExEmail);
+  //   if (alreadyExEmail) {
+  //     req.flash("error", "This email is already in use.");
+  //     return res.redirect("/signup");
+  //   };
+  // }).catch((e) => {
+  //   console.error(e);
+  // });
+  //
+  // User.find({username: enteredUsername}).then((alreadyExUsername) => {
+  //   if (alreadyExUsername) {
+  //     req.flash("error", "This username is already in use.");
+  //     return res.redirect("/signup");
+  //   };
+  // }).catch((e) => {
+  //   console.error(e);
+  // });
 
-  User.find({username: enteredUsername}).then((alreadyExUsername) => {
-    if (alreadyExUsername) {
-      req.flash("error", "This username is already in use.");
-      return res.redirect("/signup");
-    };
-  }).catch((e) => {
-    console.error(e);
-  });
+  const userByEmail = await User.find({ enteredEmail });
+  console.log(userByEmail);
+  if(!userByEmail) {
+    req.flash("error", "This email is already in use.");
+    return res.redirect("/signup");
+  }
+
+  const userByUsername = await User.find({ enteredUsername });
+  console.log(userByUsername);
+  if (!userByUsername) {
+    req.flash("error", "This username is already in use.");
+    return res.redirect("/signup");
+  }
 
   if(!enteredUsername && !enteredEmail && !enteredPassword && !enteredConfirmP) {
     req.flash("error", "Please enter a username, an email and a password.");
@@ -133,35 +148,14 @@ app.post("/signup", (req, res) => {
     password: enteredPassword
   });
 
-  newUser.save((err) => {
-    if (err) return console.error(err);
-    req.logIn(newUser, (err) => {
-      if (err) return console.error(err);
-      res.redirect("/secret");
-    });
+  await newUser.save().catch((e) => {
+    // console.log(e.toJSON().op.username);
+    return console.error(e);
   });
-
-
-    // if(err.errors.username && err.errors. && err.errors. && err.errors.)
-    // if(err.errors.username) {
-    //   // console.error(err);
-    //   req.flash("error", "Please enter a username");
-    //   res.redirect("/signup");
-    // }
-    // else if(err.errors.email) {
-    //   // console.error(err);
-    //   req.flash("error", "Please enter an email");
-    //   res.redirect("/signup");
-    // }
-    // else {
-    //   res.redirect("/");
-    // };
-    // res.send(err);
-    // "Path `username` is required."
-    // req.logIn(newUser, (err) => {
-    //   if(err) console.error(err);
-    //   res.redirect("/");
-    // });
+  req.login(newUser, (err) => {
+    if(err) return console.error(err);
+    res.redirect("/secret");
+  });
 });
 
 app.get("/forgot", (req, res) => {
