@@ -107,15 +107,15 @@ app.post("/signup",async (req, res) => {
   // });
 
   const userByEmail = await User.find({ enteredEmail });
-  console.log(userByEmail);
-  if(!userByEmail) {
+  console.log(`rejected promise von userByEmail:${userByEmail}.`);
+  if(userByEmail) {
     req.flash("error", "This email is already in use.");
     return res.redirect("/signup");
   }
 
   const userByUsername = await User.find({ enteredUsername });
-  console.log(userByUsername);
-  if (!userByUsername) {
+  // console.log(userByUsername);
+  if (userByUsername) {
     req.flash("error", "This username is already in use.");
     return res.redirect("/signup");
   }
@@ -148,10 +148,8 @@ app.post("/signup",async (req, res) => {
     password: enteredPassword
   });
 
-  await newUser.save().catch((e) => {
-    // console.log(e.toJSON().op.username);
-    return console.error(e);
-  });
+  await newUser.save().catch((e) => { /*return console.error(e)*/ });
+
   req.login(newUser, (err) => {
     if(err) return console.error(err);
     res.redirect("/secret");
@@ -162,6 +160,7 @@ app.get("/forgot", (req, res) => {
   res.render("forgot", {
     user: req.user
   });
+  // console.log(e.toJSON().op.username);
 });
 
 const async = require("async");
