@@ -8,22 +8,22 @@ const {User} = require("./../models/user");
 //local authentication via passportjs
 var local = passport.use(new localStrategy({
   usernameField: "email"
-  },
-  (username, password, done) => {
-    User.findOne({email: username}, (err, userFromDb) => {
-      if(err) return done(err);
-      if(!userFromDb) return done(null, false, {message: "Incorrect email."});
+},
+(email, password, done) => {
+  User.findOne({email: email}, (err, userFromDb) => {
+    if(err) return done(err);
+    if(!userFromDb) return done(null, false, console.log("At login: incorrect email"));
 
-      userFromDb.verifyPassword(password, (err, result) => {
-        if(result === securePassword.VALID) {
-          return done(null, userFromDb);
-        }
-        else {
-          return done(null, false, {message: "Incorrect password."});
-        }
-      });
+    userFromDb.verifyPassword(password, (err, result) => {
+      if(result === securePassword.VALID) {
+        return done(null, userFromDb);
+      }
+      else {
+        return done(null, false, console.log("At login: incorrect password"));
+      }
     });
-  }));
+  });
+}));
 
 // Staying logged in when navigating between diff pages of the app
 passport.serializeUser((user, done) => {

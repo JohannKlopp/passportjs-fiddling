@@ -40,22 +40,18 @@ app.use(passport.session());
 //Routes
 app.get("/", (req, res) => {
   res.render("index", {
-    title: "Express Server",
-    user: req.user
+    title: "WOW"
   });
 });
 
 app.get("/login", (req, res) => {
-  res.render("login", {
-    user: req.user
-  });
+  res.render("login");
 });
 
 app.post("/login",
   passport.authenticate("local", {
-    successRedirect: "/",
+    successRedirect: "/secret",
     failureRedirect: "/login",
-    failureFlash: true
   })
 );
 
@@ -66,14 +62,13 @@ app.get("/logout", (req, res) => {
 
 
 app.get("/secret", ensureAuthenticated, (req, res) => {
-  res.send("yippii");
+  res.render("secret", {
+    user: req.user.username
+  });
 });
 
-
 app.get("/signup", (req, res) => {
-  res.render("signup", {
-    user: req.user
-  });
+  res.render("signup");
 });
 
 // const validator = require("validator");
@@ -87,27 +82,8 @@ app.post("/signup",async (req, res) => {
   var enteredPassword = req.body.password;
   var enteredConfirmP = req.body.confirm;
 
-  // User.find({email: enteredEmail}).then((alreadyExEmail) => {
-  //   console.log(alreadyExEmail);
-  //   if (alreadyExEmail) {
-  //     req.flash("error", "This email is already in use.");
-  //     return res.redirect("/signup");
-  //   };
-  // }).catch((e) => {
-  //   console.error(e);
-  // });
-  //
-  // User.find({username: enteredUsername}).then((alreadyExUsername) => {
-  //   if (alreadyExUsername) {
-  //     req.flash("error", "This username is already in use.");
-  //     return res.redirect("/signup");
-  //   };
-  // }).catch((e) => {
-  //   console.error(e);
-  // });
-
   const userByEmail = await User.find({ enteredEmail });
-  console.log(`rejected promise von userByEmail:${userByEmail}.`);
+  // console.log(`rejected promise von userByEmail:${userByEmail}.`);
   if(userByEmail) {
     req.flash("error", "This email is already in use.");
     return res.redirect("/signup");
