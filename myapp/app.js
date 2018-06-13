@@ -83,39 +83,33 @@ app.post("/signup",async (req, res) => {
   var enteredConfirmP = req.body.confirm;
 
   const userByEmail = await User.find({ enteredEmail });
-  // console.log(`rejected promise von userByEmail:${userByEmail}.`);
   if(userByEmail) {
-    req.flash("error", "This email is already in use.");
-    return res.redirect("/signup");
-  }
+    console.error(`This email is already in use: ${userByEmail}`);
+  };
 
   const userByUsername = await User.find({ enteredUsername });
-  // console.log(userByUsername);
   if (userByUsername) {
-    req.flash("error", "This username is already in use.");
-    return res.redirect("/signup");
-  }
-
-  if(!enteredUsername && !enteredEmail && !enteredPassword && !enteredConfirmP) {
-    req.flash("error", "Please enter a username, an email and a password.");
-    return res.redirect("/signup");
+    console.error(`This username is already in use: ${userByUsername}`);
   };
 
   if(!enteredUsername && !enteredEmail && !enteredPassword && !enteredConfirmP) {
-    req.flash("error", "Please enter a username, an email and a password.");
-    return res.redirect("/signup");
+    console.error("The user has entered no username, no email, no password nor a confirmPassword");
   };
-  if(!enteredUsername && enteredEmail && enteredPassword && enteredConfirmP) {
-    req.flash("error", "Please enter a username.");
-    return res.render("signup", {
-      email: enteredEmail
-    });
+
+  if(!enteredUsername && !enteredEmail && enteredPassword && enteredConfirmP) {
+    console.error("The user has entered everything but a username and an email");
   };
+
   if(!enteredUsername && enteredEmail && enteredPassword && enteredConfirmP) {
-    req.flash("error", "Please enter an email.");
-    return res.render("signup", {
-      username: enteredUsername
-    });
+    console.error("The user has entered everything but a username");
+  };
+
+  if(enteredUsername && !enteredEmail && enteredPassword && enteredConfirmP) {
+    console.error("The user has entered everything but an email");
+  };
+
+  if(enteredUsername && enteredEmail && !enteredPassword || !confirmPassword) {
+    console.error("The user has entered everything but one or both of the password fields");
   };
 
   var newUser = new User({
@@ -124,7 +118,7 @@ app.post("/signup",async (req, res) => {
     password: enteredPassword
   });
 
-  await newUser.save().catch((e) => { /*return console.error(e)*/ });
+  await newUser.save().catch((e) => { return console.error(e) });
 
   req.login(newUser, (err) => {
     if(err) return console.error(err);
@@ -136,7 +130,6 @@ app.get("/forgot", (req, res) => {
   res.render("forgot", {
     user: req.user
   });
-  // console.log(e.toJSON().op.username);
 });
 
 const async = require("async");
