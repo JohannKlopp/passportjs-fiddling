@@ -9,9 +9,9 @@ block content
     .form-group
       label(for="email") Email
       if email
-        input.form-control(type="text", name="email", value=enteredEmail)
-      else
-        input.form-control(type="text", name="email")
+          input.form-control(type="text", name="email", value=email)
+      - else
+          input.form-control(type="text", name="email")
     .form-group
       label(for="password") Password
       input.form-control(type="password", name="password")

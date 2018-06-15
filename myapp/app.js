@@ -81,36 +81,51 @@ app.post("/signup",async (req, res) => {
   var enteredEmail = req.body.email;
   var enteredPassword = req.body.password;
   var enteredConfirmP = req.body.confirm;
+  console.log(enteredEmail);
 
-  const userByEmail = await User.find({ enteredEmail });
-  if(userByEmail) {
-    console.error(`This email is already in use: ${userByEmail}`);
+  console.log("*******");
+  const userByEmail = await User.find({email: enteredEmail});
+  // console.log(typeof userByEmail);
+  console.log(userByEmail);
+  if(userByEmail.length >= 1) {
+    var objUserByEmail = userByEmail[0];
+    console.error(`This email is already in use: ${objUserByEmail.email}`);
+    userByEmail.length = 0;
+    return res.render("signup", {
+      email : objUserByEmail.email
+    });
   };
 
-  const userByUsername = await User.find({ enteredUsername });
-  if (userByUsername) {
-    console.error(`This username is already in use: ${userByUsername}`);
+  const userByUsername = await User.find({username: enteredUsername});
+  if (userByUsername >= 1) {
+    var objUserByUsername = userByUsername[0];
+    console.error(`This username is already in use: ${userByUsername.username}`);
+
+    return res.render("signup", {
+      username: objUserByUsername.username
+    });
   };
 
   if(!enteredUsername && !enteredEmail && !enteredPassword && !enteredConfirmP) {
     console.error("The user has entered no username, no email, no password nor a confirmPassword");
+    return res.render("signup");
   };
-
-  if(!enteredUsername && !enteredEmail && enteredPassword && enteredConfirmP) {
-    console.error("The user has entered everything but a username and an email");
-  };
-
-  if(!enteredUsername && enteredEmail && enteredPassword && enteredConfirmP) {
-    console.error("The user has entered everything but a username");
-  };
-
-  if(enteredUsername && !enteredEmail && enteredPassword && enteredConfirmP) {
-    console.error("The user has entered everything but an email");
-  };
-
-  if(enteredUsername && enteredEmail && !enteredPassword || !confirmPassword) {
-    console.error("The user has entered everything but one or both of the password fields");
-  };
+  //
+  // if(!enteredUsername && !enteredEmail && enteredPassword && enteredConfirmP) {
+  //   return console.error("The user has entered everything but a username and an email");
+  // };
+  //
+  // if(!enteredUsername && enteredEmail && enteredPassword && enteredConfirmP) {
+  //   return console.error("The user has entered everything but a username");
+  // };
+  //
+  // if(enteredUsername && !enteredEmail && enteredPassword && enteredConfirmP) {
+  //   return console.error("The user has entered everything but an email");
+  // };
+  //
+  // if(enteredUsername && enteredEmail && !enteredPassword || !enteredConfirmP) {
+  //   return console.error("The user has entered everything but one or both of the password fields");
+  // };
 
   var newUser = new User({
     username: enteredUsername,
