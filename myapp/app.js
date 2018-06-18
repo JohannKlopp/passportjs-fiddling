@@ -77,63 +77,98 @@ app.get("/signup", (req, res) => {
 // const asyncHandler = require("express-async-handler");
 
 app.post("/signup",async (req, res) => {
-  var enteredUsername = req.body.username;
-  var enteredEmail = req.body.email;
-  var enteredPassword = req.body.password;
-  var enteredConfirmP = req.body.confirm;
-  console.log(enteredEmail);
+  const enteredUsername = req.body.username;
+  const enteredEmail = req.body.email;
+  const enteredPassword = req.body.password;
+  const enteredConfirmP = req.body.confirm;
 
-  console.log("*******");
   const userByEmail = await User.find({email: enteredEmail});
-  // console.log(typeof userByEmail);
-  console.log(userByEmail);
   if(userByEmail.length >= 1) {
-    var objUserByEmail = userByEmail[0];
+    const objUserByEmail = userByEmail[0];
     console.error(`This email is already in use: ${objUserByEmail.email}`);
     userByEmail.length = 0;
     return res.render("signup", {
-      email : objUserByEmail.email
+      email : enteredEmail
     });
   };
 
   const userByUsername = await User.find({username: enteredUsername});
-  if (userByUsername >= 1) {
-    var objUserByUsername = userByUsername[0];
-    console.error(`This username is already in use: ${userByUsername.username}`);
-
+  if (userByUsername.length >= 1) {
+    const objUserByUsername = userByUsername[0];
+    console.error(`This username is already in use: ${objUserByUsername.username}`);
+    userByUsername.length = 0;
     return res.render("signup", {
-      username: objUserByUsername.username
+      username: enteredUsername
     });
   };
 
+  // All fields empty
   if(!enteredUsername && !enteredEmail && !enteredPassword && !enteredConfirmP) {
     console.error("The user has entered no username, no email, no password nor a confirmPassword");
     return res.render("signup");
   };
-  //
-  // if(!enteredUsername && !enteredEmail && enteredPassword && enteredConfirmP) {
-  //   return console.error("The user has entered everything but a username and an email");
-  // };
-  //
-  // if(!enteredUsername && enteredEmail && enteredPassword && enteredConfirmP) {
-  //   return console.error("The user has entered everything but a username");
-  // };
-  //
-  // if(enteredUsername && !enteredEmail && enteredPassword && enteredConfirmP) {
-  //   return console.error("The user has entered everything but an email");
-  // };
-  //
-  // if(enteredUsername && enteredEmail && !enteredPassword || !enteredConfirmP) {
-  //   return console.error("The user has entered everything but one or both of the password fields");
-  // };
+  // 3 fields empty
+  if(enteredUsername && !enteredEmail && !enteredPassword && !enteredConfirmP) {
+    console.error("The user has not entered anything but a valid username");
+    return res.render("signup", {
+      username: enteredUsername
+    });
+  };
+  if(!enteredUsername && enteredEmail && !enteredPassword && !enteredConfirmP) {
+    console.error("The user has not entered anything but a valid email");
+    return res.render("signup", {
+      email: enteredEmail
+    });
+  };
+  if(!enteredUsername && !enteredEmail && !enteredPassword && enteredConfirmP) {
+    console.error("The user has not entered anything but the confirmPassword");
+    return res.render("signup", {
+      username: enteredUsername,
+      email: enteredEmail
+    });
+  };
+  if(!enteredUsername && !enteredEmail && enteredPassword && !enteredConfirmP) {
+    console.error("The user has not entered anything but the 1st password");
+    return res.render("signup", {
+      username: enteredUsername,
+      email: enteredEmail
+    });
+  };
+  // 2 fields empty
+  if(!enteredUsername && !enteredEmail && enteredPassword && enteredConfirmP) {
+    console.error("The user has entered everything but a username and an email");
+    return res.render("signup");
+  };
+  // 1 or 2 field(s) empty
+  if(enteredUsername && enteredEmail && (!enteredPassword || !enteredConfirmP)) {
+    console.error("The user has entered everything but one or both of the password fields");
+    return res.render("signup", {
+      email: enteredEmail,
+      username: enteredUsername
+    });
+  };
+  // 1 field empty
+  if(!enteredUsername && enteredEmail && enteredPassword && enteredConfirmP) {
+    console.error("The user has entered everything but a username");
+    return res.render("signup", {
+      email: enteredEmail
+    });
+  };
+  if(enteredUsername && !enteredEmail && enteredPassword && enteredConfirmP) {
+    console.error("The user has entered everything but an email");
+    return res.render("signup", {
+      username: enteredUsername
+    });
+  };
 
-  var newUser = new User({
+  // No fields empty
+  const newUser = new User({
     username: enteredUsername,
     email: enteredEmail,
     password: enteredPassword
   });
 
-  await newUser.save().catch((e) => { return console.error(e) });
+  await newUser.save().catch((e) => { return console.error(`+++++++++++ ${e}`) });
 
   req.login(newUser, (err) => {
     if(err) return console.error(err);
