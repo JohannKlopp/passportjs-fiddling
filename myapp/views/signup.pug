@@ -5,13 +5,16 @@ block content
     legend Sign up
     .form-group
       label(for="username") Username
-      input.form-control(type="text", name="username", autofocus)
+      if username
+        input.form-control(type="text", name="username", value=username)
+      - else 
+        input.form-control(type="text", name="username", autofocus)
     .form-group
       label(for="email") Email
       if email
-          input.form-control(type="text", name="email", value=email)
+        input.form-control(type="text", name="email", value=email)
       - else
-          input.form-control(type="text", name="email")
+        input.form-control(type="text", name="email")
     .form-group
       label(for="password") Password
       input.form-control(type="password", name="password")
