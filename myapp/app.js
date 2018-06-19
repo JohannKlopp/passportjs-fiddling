@@ -12,7 +12,9 @@ const session = require("express-session");
 const nodemailer = require("nodemailer");
 const passport = require("passport");
 const localStrategy = require("passport-local").Strategy;
-
+// these two are for the forgot-password feature
+const async = require("async");
+const crypto = require("crypto");
 
 
 //Local imports
@@ -31,7 +33,7 @@ app.use(logger("dev"));
 app.use(bodyParser.json()); //only used for/applied to the request body (req.body)
 app.use(bodyParser.urlencoded());
 app.use(cookieParser());
-app.use(session({ secret: "secret sesssssssion key"}));
+app.use(session({ secret: "qwyert12 secret sesssssssion key"}));
 app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
@@ -71,40 +73,38 @@ app.get("/signup", (req, res) => {
   res.render("signup");
 });
 
-// const validator = require("validator");
-// const {body, validationResult} = require("express-validator/check");
-// const {sanitizeBody} = require("express-validator/filter");
-// const asyncHandler = require("express-async-handler");
-
 app.post("/signup",async (req, res) => {
   const enteredUsername = req.body.username;
   const enteredEmail = req.body.email;
   const enteredPassword = req.body.password;
   const enteredConfirmP = req.body.confirm;
 
-  const userByEmail = await User.find({email: enteredEmail});
-  if(userByEmail.length >= 1) {
-    const objUserByEmail = userByEmail[0];
-    console.error(`This email is already in use: ${objUserByEmail.email}`);
-    userByEmail.length = 0;
-    return res.render("signup", {
-      email : enteredEmail
-    });
+  const userByUsername = await User.find({username: enteredUsername}).catch((e) => { return console.error(e) });
+  let objUserByUsername;
+  if (userByUsername.length >= 1) {
+    objUserByUsername = userByUsername[0];
+    console.error(`The entered username is already in use: ${objUserByUsername.username}`);
+    userByUsername.length = 0;
   };
 
-  const userByUsername = await User.find({username: enteredUsername});
-  if (userByUsername.length >= 1) {
-    const objUserByUsername = userByUsername[0];
-    console.error(`This username is already in use: ${objUserByUsername.username}`);
-    userByUsername.length = 0;
+  const userByEmail = await User.find({email: enteredEmail}).catch((e) => { return console.error(e) });
+  let objUserByEmail;
+  if(userByEmail.length >= 1) {
+    objUserByEmail = userByEmail[0];
+    console.error(`This email is already in use: ${objUserByEmail.email}`);
+    userByEmail.length = 0;
+  };
+
+  if(objUserByUsername !== undefined && objUserByEmail !== undefined) {
     return res.render("signup", {
-      username: enteredUsername
+      username: enteredUsername,
+      email: enteredEmail
     });
   };
 
   // All fields empty
   if(!enteredUsername && !enteredEmail && !enteredPassword && !enteredConfirmP) {
-    console.error("The user has entered no username, no email, no password nor a confirmPassword");
+    console.error("The user has not entered anything");
     return res.render("signup");
   };
   // 3 fields empty
@@ -134,6 +134,19 @@ app.post("/signup",async (req, res) => {
       email: enteredEmail
     });
   };
+  // 2 or 3 fields empty
+  if(enteredUsername && !enteredEmail && (enteredPassword || enteredConfirmP)) {
+    console.error("The user has only entered a valid username and one or both passwords");
+    return res.render("signup", {
+      username: enteredUsername
+    });
+  };
+  if(!enteredUsername && enteredEmail && (enteredPassword || enteredConfirmP)) {
+    console.error("The user has only entered a valid email and one or both passwords");
+    return res.render("signup", {
+      email: enteredEmail
+    });
+  };
   // 2 fields empty
   if(!enteredUsername && !enteredEmail && enteredPassword && enteredConfirmP) {
     console.error("The user has entered everything but a username and an email");
@@ -141,7 +154,7 @@ app.post("/signup",async (req, res) => {
   };
   // 1 or 2 field(s) empty
   if(enteredUsername && enteredEmail && (!enteredPassword || !enteredConfirmP)) {
-    console.error("The user has entered everything but one or both of the password fields");
+    console.error("The user has entered everything but one or both passwords");
     return res.render("signup", {
       email: enteredEmail,
       username: enteredUsername
@@ -161,19 +174,29 @@ app.post("/signup",async (req, res) => {
     });
   };
 
-  // No fields empty
-  const newUser = new User({
-    username: enteredUsername,
-    email: enteredEmail,
-    password: enteredPassword
-  });
+  if(enteredPassword === enteredConfirmP) {
+    // No fields empty, everything valid
+    const newUser = new User({
+      username: enteredUsername,
+      email: enteredEmail,
+      password: enteredPassword
+    });
 
-  await newUser.save().catch((e) => { return console.error(`+++++++++++ ${e}`) });
+    await newUser.save().catch((e) => { return console.error(e) });
 
-  req.login(newUser, (err) => {
-    if(err) return console.error(err);
-    res.redirect("/secret");
-  });
+    req.login(newUser, (err) => {
+      if(err) return console.error(err);
+      res.redirect("/secret");
+    });
+  }
+  else {
+    console.error("enteredPassword and enteredConfirmP don't match");
+    return res.render("signup", {
+      username: enteredUsername,
+      email: enteredEmail
+    });
+  };
+
 });
 
 app.get("/forgot", (req, res) => {
@@ -182,8 +205,6 @@ app.get("/forgot", (req, res) => {
   });
 });
 
-const async = require("async");
-const crypto = require("crypto");
 
 // POST /forgot
 app.post('/forgot', function(req, res, next) {

@@ -5,7 +5,7 @@ const securePassword = require("secure-password");
 // local imports
 const {User} = require("./../models/user");
 
-//local authentication via passportjs
+//local (email & pw) authentication via passportjs
 var local = passport.use(new localStrategy({
   usernameField: "email"
 },
